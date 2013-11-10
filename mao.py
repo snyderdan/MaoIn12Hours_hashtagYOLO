@@ -39,7 +39,7 @@ class Timer(pygame.sprite.Sprite):
         global WIDTH
         if newTime:
             self.timeLeft = newTime
-        elif self.timeLeft > 0:
+        elif self.timeLeft > 0.0333:
             self.timeLeft -= 1/30.0
         else:
             self.timeLeft = 0
@@ -148,10 +148,47 @@ class msgDisplay(pygame.sprite.Sprite):
         self.timeLeft = time
 
     def update(self):
-        if self.timeLeft > 0:
+        if self.timeLeft > .0333:
             self.timeLeft -= 1/30.0
         else:
+            self.timeLeft = 0
             self.image = pygame.Surface((0,0))
+
+class textBox(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.initFont()
+        self.initImage()
+        self.initGroup()
+
+    def initFont(self):
+        pygame.font.init()
+        self.font = pygame.font.Font(None,3)
+
+    def initImage(self):
+        self.image = pygame.Surface((200,80))
+        self.image.fill((255,255,255))
+        self.rect = self.image.get_rect()
+        self.rect.left = 20
+        self.rect.top = HEIGHT/2+124
+
+    def setText(self,text):
+        tmp = pygame.display.get_surface()
+        x_pos = self.rect.left+5
+        y_pos = self.rect.top+5
+
+        for t in text:
+            x = self.font.render(t,True,(0,0,0))
+            tmp.blit(x,(x_pos,y_pos))
+            x_pos += 10
+
+            if (x_pos > self.image.get_width()-5):
+                x_pos = self.rect.left+5
+                y_pos += 10
+
+    def initGroup(self):
+        self.group = pygame.sprite.GroupSingle()
+        self.group.add(self)
 
 pygame.init()
 pygame.font.init()
@@ -160,6 +197,7 @@ deck = Deck()
 discard = Stack()
 timer = Timer()
 texter = msgDisplay()
+textGrab = textBox()
 
 discard.placeCard(deck.drawCard())
 
@@ -177,9 +215,9 @@ playerTurn = 0
 curPlayer = players[playerTurn]
 
 clock   = pygame.time.Clock()
-sprites = pygame.sprite.Group(deck, discard, timer, texter)
+sprites = pygame.sprite.Group(deck, discard, timer, texter, textGrab)
 
-nextTurn = True
+checkRules = False
 running = True
 knockCount = 0
 
@@ -190,16 +228,19 @@ while running:
             running = False
         elif event.type == MOUSEBUTTONDOWN:
             for i in range(len(curPlayer.cards)):
-                if curPlayer.cards[i].rect.collidepoint(pygame.mouse.get_pos()):
+                if curPlayer.cards[i].rect.collidepoint(pygame.mouse.get_pos()): # check rules if we selected a card
                     discard.placeCard(curPlayer.cards.pop(i))
-                    nextTurn = False
+                    checkRules = True
                     knockCount = 0
+                    timer.timeLeft = 5
                     break
         elif event.type == KEYDOWN:
             if event.key == K_ESCAPE:
                 running = False
-            else:
-                nextTurn = True
+            if timer.timeLeft > 0 and event.key in range(K_a,K_z) + [K_SPACE]:
+                textGrab.setText(chr(event.key))
+            else:  # Knock
+                checkRules = False
                 knockCount += 1
                 playerTurn = (playerTurn + 1) % nplayers
                 curPlayer = players[playerTurn]
@@ -207,9 +248,10 @@ while running:
                     knockCount = 0
                     discard.placeCard(deck.drawCard())
 
-    if not nextTurn:
+    if checkRules and timer.timeLeft == 0:
         Rules().check()
-        nextTurn = True
+        textGrab.initImage()
+        checkRules = False
         playerTurn = (playerTurn + 1) % nplayers
         curPlayer = players[playerTurn]
 
