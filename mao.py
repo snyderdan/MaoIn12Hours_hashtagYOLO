@@ -218,6 +218,7 @@ clock   = pygame.time.Clock()
 sprites = pygame.sprite.Group(deck, discard, timer, texter, textGrab)
 
 checkRules = False
+hasPlayed  = False
 running = True
 knockCount = 0
 
@@ -228,9 +229,10 @@ while running:
             running = False
         elif event.type == MOUSEBUTTONDOWN:
             for i in range(len(curPlayer.cards)):
-                if curPlayer.cards[i].rect.collidepoint(pygame.mouse.get_pos()): # check rules if we selected a card
+                if curPlayer.cards[i].rect.collidepoint(pygame.mouse.get_pos()) and not hasPlayed: # check rules if we selected a card
                     discard.placeCard(curPlayer.cards.pop(i))
                     checkRules = True
+                    hasPlayed  = True
                     knockCount = 0
                     timer.timeLeft = 5
                     break
@@ -239,8 +241,9 @@ while running:
                 running = False
             if timer.timeLeft > 0 and event.key in range(K_a,K_z) + [K_SPACE]:
                 textGrab.setText(chr(event.key))
-            else:  # Knock
+            elif not hasPlayed:  # Knock
                 checkRules = False
+                hasPlayed = False
                 knockCount += 1
                 playerTurn = (playerTurn + 1) % nplayers
                 curPlayer = players[playerTurn]
@@ -252,6 +255,7 @@ while running:
         Rules().check()
         textGrab.initImage()
         checkRules = False
+        hasPlayed = False
         playerTurn = (playerTurn + 1) % nplayers
         curPlayer = players[playerTurn]
 
