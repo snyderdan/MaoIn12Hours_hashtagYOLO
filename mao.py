@@ -31,7 +31,7 @@ class Timer(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.timeLeft = 0
-        self.font = pygame.font.SysFont("Comic Sans", 18)
+        self.font = pygame.font.SysFont("Comic Sans", 26)
         self.image = None
         self.rect  = None
 
@@ -132,6 +132,65 @@ class cardCountCheck(Rule):
             texter.setText("Player %i is the winner!" % playerTurn)
         return []
 
+class queenCheck(Rule):
+
+    err_msg = "Failure to say 'god save the queen'."
+
+    def check(self):
+        if discard.discard[0].face == 'queen':
+            if inputBox.textBuffer != 'god save the queen':
+                return [curPlayer]
+        return []
+
+class aceCheck(Rule):
+
+    err_msg = "Failure to say 'zing'."
+
+    def check(self):
+        if discard.discard[0].face == 'ace':
+            if inputBox.textBuffer != 'zing':
+                return [curPlayer]
+        return []
+
+class kingCheck(Rule):
+
+    @property
+    def err_msg(self):
+        return "failure to say 'king of %s'" % self.suit
+
+    def check(self):
+        if discard.discard[0].face == 'king':
+            if inputBox.textBuffer != 'king of ' + discard.discard[0].suit:
+                self.suit = discard.discard[0].suit
+                return [curPlayer]
+        return []
+
+class jackCheck(Rule):
+
+    err_msg = "failure to declare a suit." 
+
+    def check(self):
+        if discard.discard[0].face == 'jack':
+            if inputBox.textBuffer not in Cards.suits:
+                return [curPlayer]
+        return []
+
+class sevenCheck(Rule):
+
+    @property
+    def err_msg(self):
+        return "Failure to say 'have a %snice day'." % ("very " * self.count)
+
+    def check(self):
+        self.count = 0
+        for i in discard.discard:
+            if i.face == "seven":
+                self.count += 1
+        if discard.discard[0].face == 'seven':
+            if inputBox.textBuffer != "have a %snice day" % ("very " * self.count):
+                return [curPlayer]
+        return []
+
 class msgDisplay(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -186,6 +245,11 @@ players = [Player([deck.drawCard() for i in range(6)]) for i in range(min(4,inpu
 
 suitChecker = validityCheck()
 cardCountChecker = cardCountCheck()
+aceChecker = aceCheck()
+sevenChecker = sevenCheck()
+jackChecker = jackCheck()
+queenChecker = queenCheck()
+kingChecker = kingCheck()
 
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 background = pygame.Surface((WIDTH,HEIGHT))
@@ -220,9 +284,9 @@ while running:
         elif event.type == KEYDOWN:
             if event.key == K_ESCAPE:
                 running = False
-            if timer.timeLeft > 0 and event.key in range(K_a,K_z) + [K_SPACE]:
+            if timer.timeLeft > 0 and event.key in range(K_a,K_z+1) + [K_SPACE]: # inputting a rule response
                 inputBox.addText(chr(event.key))
-            elif timer.timeLeft > 0 and event.key is K_BACKSPACE:
+            elif timer.timeLeft > 0 and event.key is K_BACKSPACE: # backspace
                 inputBox.textBuffer = inputBox.textBuffer[:-1]
             elif not hasPlayed:  # Knock
                 checkRules = False
