@@ -218,15 +218,23 @@ class textBox(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.font = pygame.font.SysFont('Comic Sans', 18)
-        self.textBuffer = " "
+        self.textBuffer = "Say card rule things here."
+        self.untouched = True
         self.image = None
         self.rect = None
 
     def addText(self,text):
+        if self.untouched:
+            self.textBuffer = ""
+            self.untouched = False
         self.textBuffer += text
 
+    def reset(self):
+        self.untouched = True
+        self.textBuffer = "Say card rule things here."
+
     def update(self):
-        self.image = self.font.render(self.textBuffer, True, (0,0,0))
+        self.image = self.font.render(self.textBuffer, True, (0,0,0), (180, 210, 230))
         self.rect = self.image.get_rect()
         self.rect.left = 20
         self.rect.top = HEIGHT/2+125
@@ -244,6 +252,11 @@ discard.placeCard(deck.drawCard())
 
 players = [Player([deck.drawCard() for i in range(6)]) for i in range(min(4,input("How many players are there? ")))]
 
+bgcolor = (rnd.randrange(0,255),rnd.randrange(0,255),rnd.randrange(0,255))
+nplayers = len(players)
+playerTurn = 0
+curPlayer = players[playerTurn]
+
 suitChecker = validityCheck()
 cardCountChecker = cardCountCheck()
 aceChecker = aceCheck()
@@ -254,11 +267,6 @@ kingChecker = kingCheck()
 
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 background = pygame.Surface((WIDTH,HEIGHT))
-
-bgcolor = (rnd.randrange(0,255),rnd.randrange(0,255),rnd.randrange(0,255))
-nplayers = len(players)
-playerTurn = 0
-curPlayer = players[playerTurn]
 
 clock   = pygame.time.Clock()
 sprites = pygame.sprite.Group(deck, discard, timer, texter, inputBox)
@@ -301,7 +309,7 @@ while running:
 
     if checkRules and timer.timeLeft == 0:
         Rules().check()
-        inputBox.textBuffer = ""
+        inputBox.reset()
         checkRules = False
         hasPlayed = False
         playerTurn = (playerTurn + 1) % nplayers
@@ -311,7 +319,8 @@ while running:
     sprites.update()
     sprites.draw(background)
     
-    rect = pygame.rect.Rect(0,140,79,123)
+    rect = pygame.rect.Rect(0,0,79,123)
+    rect.bottom = HEIGHT-20
     
     for i in range(len(curPlayer.cards)):
         curPlayer.cards[i].rect = rect.copy()
