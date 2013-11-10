@@ -117,7 +117,8 @@ class validityCheck(Rule):
         if discard.discard[0].suit != discard.discard[1].suit:
             if discard.discard[0].face != discard.discard[1].face:
                 curPlayer.cards.append(discard.returnCard())
-                return [players[playerTurn]]
+                playerTurn -= 1
+                return [curPlayer]
         return []
 
 class cardCountCheck(Rule):
@@ -217,7 +218,7 @@ class textBox(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.font = pygame.font.SysFont('Comic Sans', 18)
-        self.textBuffer = ""
+        self.textBuffer = " "
         self.image = None
         self.rect = None
 
@@ -300,7 +301,7 @@ while running:
 
     if checkRules and timer.timeLeft == 0:
         Rules().check()
-        inputBox.textBuffer = []
+        inputBox.textBuffer = ""
         checkRules = False
         hasPlayed = False
         playerTurn = (playerTurn + 1) % nplayers
