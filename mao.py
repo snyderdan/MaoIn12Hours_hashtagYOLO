@@ -157,38 +157,19 @@ class msgDisplay(pygame.sprite.Sprite):
 class textBox(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.initFont()
-        self.initImage()
-        self.initGroup()
+        self.font = pygame.font.SysFont('Comic Sans', 18)
+        self.textBuffer = ""
+        self.image = None
+        self.rect = None
 
-    def initFont(self):
-        pygame.font.init()
-        self.font = pygame.font.Font(None,3)
+    def addText(self,text):
+        self.textBuffer += text
 
-    def initImage(self):
-        self.image = pygame.Surface((200,80))
-        self.image.fill((255,255,255))
+    def update(self):
+        self.image = self.font.render(self.textBuffer, True, (0,0,0))
         self.rect = self.image.get_rect()
         self.rect.left = 20
-        self.rect.top = HEIGHT/2+124
-
-    def setText(self,text):
-        tmp = pygame.display.get_surface()
-        x_pos = self.rect.left+5
-        y_pos = self.rect.top+5
-
-        for t in text:
-            x = self.font.render(t,True,(0,0,0))
-            tmp.blit(x,(x_pos,y_pos))
-            x_pos += 10
-
-            if (x_pos > self.image.get_width()-5):
-                x_pos = self.rect.left+5
-                y_pos += 10
-
-    def initGroup(self):
-        self.group = pygame.sprite.GroupSingle()
-        self.group.add(self)
+        self.rect.top = HEIGHT/2+125
 
 pygame.init()
 pygame.font.init()
@@ -197,7 +178,7 @@ deck = Deck()
 discard = Stack()
 timer = Timer()
 texter = msgDisplay()
-textGrab = textBox()
+inputBox = textBox()
 
 discard.placeCard(deck.drawCard())
 
@@ -215,7 +196,7 @@ playerTurn = 0
 curPlayer = players[playerTurn]
 
 clock   = pygame.time.Clock()
-sprites = pygame.sprite.Group(deck, discard, timer, texter, textGrab)
+sprites = pygame.sprite.Group(deck, discard, timer, texter, inputBox)
 
 checkRules = False
 hasPlayed  = False
@@ -240,7 +221,9 @@ while running:
             if event.key == K_ESCAPE:
                 running = False
             if timer.timeLeft > 0 and event.key in range(K_a,K_z) + [K_SPACE]:
-                textGrab.setText(chr(event.key))
+                inputBox.addText(chr(event.key))
+            elif timer.timeLeft > 0 and event.key is K_BACKSPACE:
+                inputBox.textBuffer = inputBox.textBuffer[:-1]
             elif not hasPlayed:  # Knock
                 checkRules = False
                 hasPlayed = False
@@ -253,14 +236,14 @@ while running:
 
     if checkRules and timer.timeLeft == 0:
         Rules().check()
-        textGrab.initImage()
+        inputBox.textBuffer = []
         checkRules = False
         hasPlayed = False
         playerTurn = (playerTurn + 1) % nplayers
         curPlayer = players[playerTurn]
 
-    sprites.update()
     background.fill(bgcolor)
+    sprites.update()
     sprites.draw(background)
     
     rect = pygame.rect.Rect(0,140,79,123)
