@@ -93,7 +93,6 @@ class Rules:
 
     def check(self):
         for rule in self.rules:
-            print rule.err_msg
             for player in rule.check():
                 texter.setText("Player %i: %s" % (playerTurn+1, rule.err_msg))
                 player.cards.append(deck.drawCard())
@@ -103,7 +102,6 @@ class Rule(object):
     err_msg = "Failure to follow rules."
     
     def __init__(self):
-        print type(self)
         Rules.rules.append(self)
         
     def check(self):
@@ -179,13 +177,21 @@ class jackCheck(Rule):
         return []
 
 
-class sevenCheck(Rule):      
-    err_msg = "Failure to say 'have a (very) nice day'."     
+class sevenCheck(Rule):
+    
+    def __init__(self):
+        Rule.__init__(self)
+        self.count = 0
+
+    @property
+    def err_msg(self):
+        return "Failure to say 'have a %snice day'." % ("very " * self.count)
+    
     def check(self):
         for i in discard.discard:
             if i.face == "seven":
                 self.count += 1
-        if discard.discard[0].face == 'seven':
+        if discard.discard[0].face == '7':
             if inputBox.textBuffer != "have a %snice day" % ("very " * self.count):
                 return [curPlayer]
         return []
