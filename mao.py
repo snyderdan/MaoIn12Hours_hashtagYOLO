@@ -93,6 +93,7 @@ class Rules:
 
     def check(self):
         for rule in self.rules:
+            print rule.err_msg
             for player in rule.check():
                 texter.setText("Player %i: %s" % (playerTurn+1, rule.err_msg))
                 player.cards.append(deck.drawCard())
@@ -102,29 +103,26 @@ class Rule(object):
     err_msg = "Failure to follow rules."
     
     def __init__(self):
+        print type(self)
         Rules.rules.append(self)
         
     def check(self):
         return []
 
 class validityCheck(Rule):
-
     err_msg = "Neither suit or face value match."
-    
     def check(self):
         if len(discard.discard) < 2:
             return []
         if discard.discard[0].suit != discard.discard[1].suit:
             if discard.discard[0].face != discard.discard[1].face:
                 curPlayer.cards.append(discard.returnCard())
-                playerTurn -= 1
+                #playerTurn -= 1
                 return [curPlayer]
         return []
 
 class cardCountCheck(Rule):
-    
     err_msg = "You have too many cards. You lose."
-
     def check(self):
         if len(curPlayer.cards) == 11:
             return [players.pop(playerTurn)]
@@ -133,32 +131,37 @@ class cardCountCheck(Rule):
             texter.setText("Player %i is the winner!" % playerTurn)
         return []
 
+
+
+class lastCardCheck(Rule):
+    err_msg = "Failure to say 'last card'."
+    def check(self):
+        if len(curPlayer.cards) == 1:
+            if inputBox.textBuffer != 'last card':
+                return [curPlayer]
+        return []
+        
+
 class queenCheck(Rule):
-
     err_msg = "Failure to say 'god save the queen'."
-
     def check(self):
         if discard.discard[0].face == 'queen':
             if inputBox.textBuffer != 'god save the queen':
                 return [curPlayer]
         return []
 
+
 class aceCheck(Rule):
-
     err_msg = "Failure to say 'zing'."
-
     def check(self):
         if discard.discard[0].face == 'ace':
             if inputBox.textBuffer != 'zing':
                 return [curPlayer]
         return []
 
+
 class kingCheck(Rule):
-
-    @property
-    def err_msg(self):
-        return "failure to say 'king of %s'" % self.suit
-
+    err_msg = "failure to say 'king of suit'"
     def check(self):
         if discard.discard[0].face == 'king':
             if inputBox.textBuffer != 'king of ' + discard.discard[0].suit:
@@ -166,24 +169,19 @@ class kingCheck(Rule):
                 return [curPlayer]
         return []
 
+
 class jackCheck(Rule):
-
     err_msg = "failure to declare a suit." 
-
     def check(self):
         if discard.discard[0].face == 'jack':
             if inputBox.textBuffer not in Cards.suits:
                 return [curPlayer]
         return []
 
-class sevenCheck(Rule):
 
-    @property
-    def err_msg(self):
-        return "Failure to say 'have a %snice day'." % ("very " * self.count)
-
+class sevenCheck(Rule):      
+    err_msg = "Failure to say 'have a (very) nice day'."     
     def check(self):
-        self.count = 0
         for i in discard.discard:
             if i.face == "seven":
                 self.count += 1
@@ -191,6 +189,7 @@ class sevenCheck(Rule):
             if inputBox.textBuffer != "have a %snice day" % ("very " * self.count):
                 return [curPlayer]
         return []
+
 
 class msgDisplay(pygame.sprite.Sprite):
     def __init__(self):
@@ -259,6 +258,7 @@ curPlayer = players[playerTurn]
 
 suitChecker = validityCheck()
 cardCountChecker = cardCountCheck()
+lastCardChecker = lastCardCheck()
 aceChecker = aceCheck()
 sevenChecker = sevenCheck()
 jackChecker = jackCheck()
