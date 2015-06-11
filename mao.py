@@ -326,7 +326,7 @@ while running:
     sprites.draw(background)
     
     rect = pygame.rect.Rect(0,0,79,123)
-    rect.bottom = HEIGHT-20
+    rect.bottom = HEIGHT-60
     
     for i in range(len(curPlayer.cards)):
         curPlayer.cards[i].rect = rect.copy()
